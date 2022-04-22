@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include "stack.h"
 
-const unsigned long long canary = 15000987876788768;
-
 /**  
   * @file stack.c
   * @brief Contains funstions that mimic ctack manipulation
@@ -14,15 +12,17 @@ const unsigned long long canary = 15000987876788768;
   * @return Created stack
 */
 
+const unsigned long long canary = 15000987876788768;
+
 stack* stack_construct() {
-  stack* stack = (struct stack*)calloc(1, sizeof(stack));
-  stack->size = 4; // не работает при size < 4
-  stack->pointer = -1;
+  stack* stack = (struct stack*)calloc(1, sizeof(struct stack));
+  stack->capacity = 4; // не работает при capacity < 4
+  stack->size = -1;
   stack->status = OK;
-  elem_t* arr = (elem_t*)calloc(stack->size+1, sizeof(elem_t));
-  arr[stack->pointer+1] = (elem_t)canary;
-  (stack->arr) = arr;
-  stack->hash = MurmurHash2(stack);
+  elem_t* arr_tmp = (elem_t*)calloc(stack->capacity+1, sizeof(elem_t));
+  arr_tmp[stack->size+1] = (elem_t)canary;
+  (stack->arr) = arr_tmp;
+  (stack->hash) = 0;
   return stack;
 }
 
@@ -33,15 +33,15 @@ stack* stack_construct() {
 */
 
 void stack_push(stack* stack, elem_t elem) {
-  if (verify(stack) != OK || hash_verify(stack) != OK) {
+  if (verify(stack) != OK) {
     return;
   }
-  stack->pointer++;
-  stack->arr[stack->pointer] = elem;
-  stack->arr[stack->pointer+1] = (elem_t)canary;
+  stack->size++;
+  stack->arr[stack->size] = elem;
+  stack->arr[stack->size+1] = (elem_t)canary;
   resize_up(stack);
   stack->hash = MurmurHash2(stack);
-  if (verify(stack) != OK || hash_verify(stack) != OK) {
+  if (verify(stack) != OK) {
     return;
   }
 }
@@ -53,18 +53,18 @@ void stack_push(stack* stack, elem_t elem) {
 */
 
 elem_t stack_pop(stack* stack) {
-  if (verify(stack) != OK || hash_verify(stack) != OK) {
+  if (verify(stack) != OK) {
     return (elem_t)-10e7;
   }
-  if(stack->pointer >= 0) {
-    elem_t temp = stack->arr[stack->pointer];
-    stack->arr[stack->pointer] = (elem_t)canary;
-    stack->pointer--;
+  if(stack->size >= 0) {
+    elem_t temp = stack->arr[stack->size];
+    stack->arr[stack->size] = (elem_t)canary;
+    stack->size--;
     stack->hash = MurmurHash2(stack);
     return temp;
   }
   printf("\n\n");
-  if (verify(stack) != OK || hash_verify(stack) != OK) {
+  if (verify(stack) != OK) {
     return (elem_t)-10e7;
   }
   return (elem_t)-10e7;
@@ -77,12 +77,13 @@ elem_t stack_pop(stack* stack) {
 */
 
 Exceptions verify(stack* stack) {
-  if(stack->arr[stack->pointer+1] != (elem_t)canary) {
+  if(stack->arr[stack->size+1] != (elem_t)canary) {
     stack->status = size_problem;
     return size_problem;
   }
   stack->status = OK;
-  return OK;
+  if (hash_verify(stack) == OK) return OK;
+  else return hash_problem;
 }
 
 /**
@@ -101,45 +102,46 @@ Exceptions hash_verify(stack* stack) {
 }
 
 /**
-  * @brief Increases stack size
-  * @param stack The stack which size is being increased
+  * @brief Increases stack capacity
+  * @param stack The stack which capacity is being increased
 */
 
 void resize_up(stack* stack) {
-  if(stack->pointer+1 == stack->size) {
-    stack->arr = realloc(stack->arr, sizeof(elem_t)*(stack->size)*2+1);
-    stack->size*=2;
+  if(stack->size+1 == stack->capacity) {
+    stack->arr = realloc(stack->arr, sizeof(elem_t)*(stack->capacity)*2+1);
+    stack->capacity*=2;
   }
   stack->hash = MurmurHash2(stack);
 }
 
 /**
-  * @brief Reduces stack size
-  * @param stack The stack which size is being reduced
+  * @brief Reduces stack capacity
+  * @param stack The stack which capacity is being reduced
 */
 
 void resize_down(stack* stack) {
-  if(stack->size > 4) {
-    stack->arr = realloc(stack->arr, sizeof(elem_t)*((stack->size)/2)+1);
-    stack->size/=2;
-    stack->arr[stack->size] = (elem_t)canary;
-    stack->pointer = stack->size - 1;
+  if(stack->capacity > 4) {
+    stack->arr = realloc(stack->arr, sizeof(elem_t)*((stack->capacity)/2)+1);
+    stack->capacity/=2;
+    stack->arr[stack->capacity] = (elem_t)canary;
+    stack->size = stack->capacity - 1;
     stack->hash = MurmurHash2(stack);
   }
 }
 
 /**
-  * @brief Reduces stack size
+  * @brief Reduces stack capacity
   * @param stack The stack from which the hash is created
   * @return The hash of the stack
 */
 
 int MurmurHash2 (stack* stack)
 {
-  /*const unsigned int m = 0x5bd1e995;
+  /*
+  const unsigned int m = 0x5bd1e995;
   const unsigned int seed = 0;
   const int r = 24;
-  unsigned int len = stack->pointer+1;
+  unsigned int len = stack->size+1;
 
   unsigned int h = seed ^ len;
 
@@ -178,7 +180,8 @@ int MurmurHash2 (stack* stack)
   h ^= h >> 13;
   h *= m;
   h ^= h >> 15;
-
-  return h;*/
+  
+  return h;
+  */
   return 0;
 }

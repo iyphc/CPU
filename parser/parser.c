@@ -63,6 +63,7 @@ char* fileToString(FILE* source, size_t size) {
     }
 	char* file_buffer = (char*)calloc(size, sizeof(char));	
 	fread(file_buffer, size, sizeof(char), source);
+	file_buffer[size-1] = '\n';
 	return file_buffer;
 }
 
@@ -77,7 +78,7 @@ int formatString(char* source, size_t size) {
 	if (source == NULL) return 0;
 	int flag = 0, lines_count = 0;
 	char* from = source;
-	while(from < source+size-1) {
+	while(from < source+size) {
 		flag = 0;
 		while (*from == '\n') {
 			if(flag == 0) {
