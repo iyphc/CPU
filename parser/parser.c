@@ -110,7 +110,7 @@ char** buildString(char* source, char** target, size_t size) {
   	int i = 1, flag = 0;
 		//Для отсечения лишних \0 в самом начале
   	if(from[0] == '\0') {
-  		while(*from == '\0'){
+  		while(*from == '\0' && from < source + size-1){
   			from++;
   		}
   	}
@@ -130,7 +130,8 @@ char** buildString(char* source, char** target, size_t size) {
     	if (flag != 0) {
     		from--;
     	}	
-    	to++; from++;
+			if (from < source + size-1) from++;
+    	if (to < source + size-1)to++; 
     }
 	return target;
 }
