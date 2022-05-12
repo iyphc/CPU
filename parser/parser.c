@@ -16,14 +16,14 @@
 
 
 size_t count_symbols(FILE *input) {
-	if (input == NULL) {
-    printf("\nCrashed\n\n");
-    return 0;
+  if (input == NULL) {
+  printf("\nCrashed\n\n");
+  return 0;
   }
-	fseek(input, 0, SEEK_END);
-	size_t count = ftell(input);
-	fseek(input, 0, SEEK_SET);
-	return count;
+  fseek(input, 0, SEEK_END);
+  size_t count = ftell(input);
+  fseek(input, 0, SEEK_SET);
+  return count;
 }
 
 /**
@@ -35,17 +35,17 @@ size_t count_symbols(FILE *input) {
 
 
 size_t count_lines(char *input, size_t size) {
-	if (input == NULL) {
-    printf("\nCrashed\n\n");
-    return 0;
+  if (input == NULL) {
+  printf("\nCrashed\n\n");
+  return 0;
   }
-	size_t ret = 0;
-	for (int i = 0; i < size; i++) {
-		if (input[i] == '\n') {
-			ret++;
-		}
-	}
-	return ret;
+  size_t ret = 0;
+  for (int i = 0; i < size; i++) {
+    if (input[i] == '\n') {
+      ret++;
+    }
+  }
+  return ret;
 }
 
 /**
@@ -57,14 +57,14 @@ size_t count_lines(char *input, size_t size) {
 
 
 char* fileToString(FILE* source, size_t size) {
-	if (source == NULL) {
-        printf("\nCrashed\n\n");
-        return NULL;
-    }
-	char* file_buffer = (char*)calloc(size + 1, sizeof(char));	
-	fread(file_buffer, size, sizeof(char), source);
-	file_buffer[size] = '\n';
-	return file_buffer;
+  if (source == NULL) {
+    printf("\nCrashed\n\n");
+    return NULL;
+  }
+  char* file_buffer = (char*)calloc(size + 1, sizeof(char));  
+  fread(file_buffer, size, sizeof(char), source);
+  file_buffer[size] = '\0';
+  return file_buffer;
 }
 
 /**
@@ -75,22 +75,22 @@ char* fileToString(FILE* source, size_t size) {
 */
 
 int formatString(char* source, size_t size) {
-	if (source == NULL) return 0;
-	int flag = 0, lines_count = 0;
-	char* from = source;
-	while(from < source+size) {
-		flag = 0;
-		while (*from == '\n') {
-			if(flag == 0) {
-				lines_count++;
-			}
-			flag++;
-			*from = '\0';
-			from++;
-		}
-		from++;
-	}
-	return lines_count;
+  if (source == NULL) return 0;
+  int flag = 0, lines_count = 0;
+  char* from = source;
+  while(from < source+size) {
+    flag = 0;
+    while (*from == '\n') {
+      if(flag == 0) {
+        lines_count++;
+      }
+      flag++;
+      *from = '\0';
+      from++;
+    }
+    from++;
+  }
+  return lines_count;
 }
 
 /**
@@ -101,39 +101,39 @@ int formatString(char* source, size_t size) {
 * @return Two-dimensional array into which the strings will be copied
 */
 
-char** buildString(char* source, char** target, size_t size) {
-	if (source == NULL || target == NULL) {
-        printf("\nCrashed\n\n");
-        return NULL;
-    } 
-    char* from = source; char* to = source;
-  	int i = 1, flag = 0;
-		//Для отсечения лишних \0 в самом начале
-  	if(from[0] == '\0') {
-  		while(*from == '\0' && from < source + size-1){
-  			from++;
-  		}
-  	}
-  	target[0] = to;
-		//Само усечение большого количества \0
-    while (from < source + size-1) {
-    	flag = 0;
-    	*to = *from;
-    	while(*from == '\0' && from < source + size-1) {
-	    	if (*from == '\0' && flag == 0) {
-	    		target[i] = (to+1);
-	    		i++;
-	    	}
-	    	flag++;
-	    	from++;
-    	}
-    	if (flag != 0) {
-    		from--;
-    	}	
-			if (from < source + size-1) from++;
-    	if (to < source + size-1)to++; 
+char** buildString(char* source, char** target, size_t source_size, size_t target_size) { //Working program, need to rewrite
+  if (source == NULL || target == NULL) {
+    printf("\nCrashed\n\n");
+    return NULL;
+  } 
+  char* from = source; char* to = source;
+  int i = 1, flag = 0;
+  //Clipping '\0' at the beginning
+  if(from[0] == '\0') {
+    while(*from == '\0' && from < source + source_size-1){
+      from++;
     }
-	return target;
+  }
+  target[0] = to;
+ //Clipping '\0' after the first function
+  while (from < source +  source_size-1) {
+    flag = 0;
+    *to = *from;
+    while(*from == '\0' && from < source + source_size-1) {
+			if (*from == '\0' && flag == 0 && i < target_size) {
+        target[i] = (to+1);
+        i++;
+      }
+      flag++;
+      from++;
+    }
+    if (flag != 0) {
+      from--;
+    }  
+    if (from < source + source_size-1) from++;
+    if (to < source + source_size-1)to++; 
+  }
+  return target;
 }
 
 /**
@@ -144,5 +144,5 @@ char** buildString(char* source, char** target, size_t size) {
 */
 
 int comp(const void* p1, const void* p2) {
-	return myStrcmp(*(const char**)p1, *(const char**)p2);
+  return myStrcmp(*(const char**)p1, *(const char**)p2);
 }
