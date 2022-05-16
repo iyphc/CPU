@@ -5,7 +5,7 @@ typedef float elem_t;
 const int number_of_registers;
 
 typedef struct cpu {
-	elem_t * registers; 
+	elem_t * registers; //5-й -- fx (значение cmp)
 	stack* stack;
 } cpu;
 

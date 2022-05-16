@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "cpu.h"
 
-const int number_of_registers = 4;
+const int number_of_registers = 5;
 
 int main(const int argc, const char* argv[]) {
   FILE* input = fopen(argv[1], "rb");
