@@ -1,22 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "../parser/parser.h"
-
-typedef float elem_t;
-#define MAX_BUF_SIZE 1024
-
-typedef struct {
-  char* label;
-  int pointer;
-} label;
-
-elem_t* fill_command_buffer(char**strings, int actual_lines_count, int * cnt);
-label * fill_labels_array(char ** strings, size_t array_size, size_t label_num);
-size_t count_label_numbers (char** strings, size_t size);
-void init_label (label * label, int number_of_lines, char * name);
-void dist_label (label * label);
-int find_reg(char*);
+#include "asm.h"
 
 int main(const int argc, const char* argv[]) {
   //Translates text into an array of strings
@@ -42,7 +24,7 @@ int main(const int argc, const char* argv[]) {
   elem_t* output_buffer = fill_command_buffer(strings, actual_lines_count, & k);
   //Puts data into a file
   FILE* executable = fopen("a.myexe", "wb");
-  fwrite(output_buffer, sizeof(elem_t), MAX_BUF_SIZE, executable);
+  fwrite(output_buffer, sizeof(elem_t), actual_lines_count*4, executable);
   fclose(executable);
   free(strings);
   free(file_buffer);
@@ -60,24 +42,28 @@ label * fill_labels_array(char ** strings, size_t array_size, size_t label_num) 
       for(int j = 0; j < strlen(strings[i])-1; j++) {
         name[j] = strings[i][j];
       }
-      init_label(labels+cnt, 0, name);
+      init_label(labels+cnt, -1, i, name);
       cnt++;
     }
   }
   return labels;
 }
 
-size_t count_label_numbers (char** strings, size_t size) {
+size_t count_label_numbers (char** strings, size_t size) { 
   size_t label_num = 0;
   for(int i = 0; i < size; i++) {
-    if (strstr(strings[i], ":")) label_num++; 
+    if (strstr(strings[i], ":")) { 
+      label_num++; 
+    }
+
   }
   return label_num;
 }
 
-void init_label (label * label, int number_of_lines, char * name) {
+void init_label (label * label, int number_of_lines, int str_pos, char * name) {
   label->label = name;
   label->pointer = number_of_lines;
+  label->str_pos = str_pos;
 }
 
 void dist_label (label * label) {
@@ -101,11 +87,21 @@ int find_reg(char* string) {
   return -1;
 }
 
+label * find_label(char * label_name, label * labels, size_t label_num) {
+  for(int i = 0; i < label_num; i++) {
+    if (strstr(label_name, labels[i].label)) return (labels + i);
+  }
+  return NULL;
+}
+
 elem_t* fill_command_buffer(char**strings, int actual_lines_count, int * cnt) {
   elem_t* output_buffer = (elem_t*)calloc(sizeof(elem_t), actual_lines_count*4);
   //Makes marks array
   int labels_num = count_label_numbers(strings, actual_lines_count);
   label * labels = fill_labels_array(strings, actual_lines_count, labels_num);
+  for(int i = 0; i < labels_num; i++) {
+    labels[i].pointer = -1;
+  }
   //
   for(int i = 0; i < actual_lines_count*4; i++) {
     output_buffer[i] = -1000;
@@ -115,41 +111,61 @@ elem_t* fill_command_buffer(char**strings, int actual_lines_count, int * cnt) {
     if (strstr(strings[i], "push") != NULL) {
       if (find_reg(strings[i]) == -1) {
         output_buffer[*cnt] = 1;
-        cnt[0]++;
+        (*cnt)++;
         output_buffer[*cnt] = atof(strings[i]+5);
-        cnt[0]++;
+        (*cnt)++;
       }
       else {
         output_buffer[*cnt] = 0;
-        cnt[0]++;
+        (*cnt)++;
         output_buffer[*cnt] = find_reg(strings[i]+5);
-        cnt[0]++;
+        (*cnt)++;
       }
     }
     else if (strstr(strings[i], "pop") != NULL) {
       output_buffer[*cnt] = 2;
-      cnt[0]++;
+      (*cnt)++;
       output_buffer[*cnt] = find_reg(strings[i]+4);
-      cnt[0]++;
+      (*cnt)++;
     }
     else if (strstr(strings[i], "add") != NULL) {
       output_buffer[*cnt] = 3;
-      cnt[0]++;
+      (*cnt)++;
       output_buffer[*cnt] = find_reg(strings[i]+4);
-      cnt[0]++;
+      (*cnt)++;
       output_buffer[*cnt] = find_reg(strings[i]+7);
-      cnt[0]++;
+      (*cnt)++;
     }
     else if (strstr(strings[i], "mov") != NULL) {
       output_buffer[*cnt] = 4;
-      cnt[0]++;
+      (*cnt)++;
       output_buffer[*cnt] = find_reg(strings[i]+4);
-      cnt[0]++;
+      (*cnt)++;
       output_buffer[*cnt] = find_reg(strings[i]+7);
-      cnt[0]++;
+      (*cnt)++;
     }
-    else if (strstr(strings[i], ":") != NULL) {
-      //обработка метки
+    else if (strstr(strings[i], "jmp")) {
+      label * des_label = find_label(strings[i]+4, labels, labels_num);
+      if (des_label) {
+        output_buffer[*cnt] = 7;
+        (*cnt)++;
+        output_buffer[*cnt] = (elem_t)des_label->str_pos;
+        (*cnt)++;
+      }
+    }
+    else if (strstr(strings[i], ":")) {
+      label * des_label = find_label(strings[i], labels, labels_num); //desired_label
+      if (des_label && des_label->pointer == -1) {
+        des_label->pointer = *cnt;
+      }
+    }
+  }
+  //если идёт 7, а потом следом -1, то надо ещё раз посмотреть буфер и заменить -1 на значение
+  //прохо
+  for(int i = 0; i < (*cnt); i++) {
+    if (output_buffer[i] == (elem_t)7) {
+      label * des_label = find_label(strings[(int)output_buffer[i+1]], labels, labels_num);
+      if (des_label != NULL) output_buffer[i+1] = des_label->pointer;
     }
   }
   return output_buffer;
