@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "cpu.h"
 
 const int number_of_registers = 5;
@@ -19,6 +17,7 @@ int main(const int argc, const char* argv[]) {
   printf("\n\n");
   cpu * mycpu = cpu_construct();
   int i = 0;
+  int k = 0;
   while (i < count) {
     if ((int)buffer[i] == 0) {
       printf("PUSH_REG COMPLETED\n");
@@ -46,6 +45,12 @@ int main(const int argc, const char* argv[]) {
       mov_reg_reg(mycpu, (int)buffer[i+1], (int)buffer[i+2]);
       i+=3;
     }
+    else if ((int)buffer[i] == 7) {
+      printf("MOVED TO MARK\n");
+      printf("i = %d\n", buffer[i+1]);
+      i = buffer[i+1];
+      
+    }
     else {
       printf("EMERGENCY SHUTDOWN\n");
       printf("ax = %.2f\n", mycpu->registers[0]);
@@ -55,6 +60,8 @@ int main(const int argc, const char* argv[]) {
       printf("----------------------\n");
       break;
     }
+    k++;
+    if (k == 15) break; 
     printf("ax = %.2f\n", mycpu->registers[0]);
     printf("bx = %.2f\n", mycpu->registers[1]);
     printf("cx = %.2f\n", mycpu->registers[2]);

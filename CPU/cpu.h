@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "../stack/stack.h"
 
 typedef unsigned long long ull;
