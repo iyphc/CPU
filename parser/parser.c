@@ -56,14 +56,15 @@ size_t count_lines(char *input, size_t size) {
 */
 
 
-char* fileToString(FILE* source, size_t size) {
+char* fileToString(FILE* source, int * size) {
   if (source == NULL) {
     printf("\nCrashed\n\n");
     return NULL;
   }
-  char* file_buffer = (char*)calloc(size + 1, sizeof(char));  
-  fread(file_buffer, size, sizeof(char), source);
-  file_buffer[size] = '\0';
+  char* file_buffer = (char*)calloc(*size + 1, sizeof(char));  
+  fread(file_buffer, *size, sizeof(char), source);
+  file_buffer[*size] = '\0';
+  *size = *size + 1;
   return file_buffer;
 }
 
@@ -101,6 +102,7 @@ int formatString(char* source, size_t size) {
 * @return Two-dimensional array into which the strings will be copied
 */
 
+//Сделай тесты
 char** buildString(char* source, char** target, size_t source_size, size_t target_size) { //Working program, need to rewrite
   if (source == NULL || target == NULL) {
     printf("\nCrashed\n\n");
