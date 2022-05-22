@@ -1,15 +1,25 @@
+awesome_func:
+pop dx
+pop cx
+push 11
+push dx
+ret
+
+
+start:
 push 10
 push 15
-push 100
 pop ax
 pop bx
+push ax
+push bx
+push 10
+call awesome_func
 pop cx
-add ax bx
-add ax bx
-add ax cx
-add ax cx
-add cx ax
-add cx bx
-mov dx ax
-push 100
+pop bx
 pop ax
+
+
+
+
+
