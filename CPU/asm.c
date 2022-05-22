@@ -45,6 +45,14 @@ label * fill_labels_array(char ** strings, size_t array_size, size_t label_num) 
       init_label(labels+cnt, -1, i, name);
       cnt++;
     }
+    else if (strstr(strings[i], "call")) {
+      name = (char *)calloc(strlen(strings[i])-5, sizeof(char));
+      for(int j = 0; j < strlen(strings[i])-5; j++) {
+        name[j] = strings[i][j+5];
+      }
+      init_label(labels+cnt, -1, i, name);
+      cnt++;
+    }
   }
   return labels;
 }
@@ -72,19 +80,40 @@ void dist_label (label * label) {
 }
 
 int find_reg(char* string) {
-  if (strstr(string, "ax") && (string[0] == 'a' || string[1] == 'a')) {
-    return 0;
+  int flag = -1;
+  if (strstr(string, "ax")) {
+    if (string[0] == 'a' || string[1] == 'a') {
+      return 0;
+    }
+    else {
+      flag = 1;
+    }
   }
-  if (strstr(string, "bx") && (string[0] == 'b' || string[1] == 'b')) {
-    return 1;
+  if (strstr(string, "bx")) {
+    if (string[0] == 'b' || string[1] == 'b') {
+      return 1;
+    }
+    else {
+      flag = 1;
+    }
   }
-  if (strstr(string, "cx") && (string[0] == 'c' || string[1] == 'c')) {
-    return 2;
+  if (strstr(string, "cx")) {
+    if (string[0] == 'c' || string[1] == 'c') {
+      return 2;
+    }
+    else {
+      flag = 1;
+    }
   }
-  if (strstr(string, "dx") && (string[0] == 'd' || string[1] == 'd')) {
-    return 3;
+  if (strstr(string, "dx")) {
+    if (string[0] == 'd' || string[1] == 'd') {
+      return 3;
+    }
+    else {
+      flag = 1;
+    }
   }
-  return -1;
+  return flag;
 }
 
 label * find_label(char * label_name, label * labels, size_t label_num) {
@@ -106,6 +135,10 @@ elem_t* fill_command_buffer(char**strings, int actual_lines_count, int * cnt) {
   for(int i = 0; i < actual_lines_count*4; i++) {
     output_buffer[i] = -1000;
   }
+  //Find start of program
+  output_buffer[0] = 7;
+  output_buffer[1] = find_label("start", labels, labels_num)->str_pos;
+  *cnt+=2;
   //Fill comands buffer
   for(int i = 0; i < actual_lines_count; i++) {
     if (strstr(strings[i], "push") != NULL) {
@@ -153,6 +186,19 @@ elem_t* fill_command_buffer(char**strings, int actual_lines_count, int * cnt) {
         (*cnt)++;
       }
     }
+    else if (strstr(strings[i], "call")) {
+      label * des_label = find_label(strings[i]+5, labels, labels_num);
+      if (des_label) {
+        output_buffer[*cnt] = 8;
+        (*cnt)++;
+        output_buffer[*cnt] = (elem_t)des_label->str_pos;
+        (*cnt)++;
+      }
+    }
+    else if (strstr(strings[i], "ret")) {
+      output_buffer[*cnt] = 9;
+      (*cnt)++;
+    }
     else if (strstr(strings[i], ":")) {
       label * des_label = find_label(strings[i], labels, labels_num); //desired_label
       if (des_label && des_label->pointer == -1) {
@@ -163,9 +209,10 @@ elem_t* fill_command_buffer(char**strings, int actual_lines_count, int * cnt) {
   //если идёт 7, а потом следом -1, то надо ещё раз посмотреть буфер и заменить -1 на значение
   //прохо
   for(int i = 0; i < (*cnt); i++) {
-    if (output_buffer[i] == (elem_t)7) {
-      label * des_label = find_label(strings[(int)output_buffer[i+1]], labels, labels_num);
+    if (output_buffer[i] == (elem_t)7 || output_buffer[i] == (elem_t)8) {
+      label * des_label = find_label(strings[(int)output_buffer[i+1]], labels, labels_num); //ошибка
       if (des_label != NULL) output_buffer[i+1] = des_label->pointer;
+      else output_buffer[i+1] = 123;
     }
   }
   return output_buffer;
