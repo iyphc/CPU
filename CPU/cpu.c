@@ -10,11 +10,11 @@ int main(const int argc, const char* argv[]) {
   elem_t* buffer = (elem_t*)malloc(count);
   count /= sizeof(elem_t);
   fread(buffer, sizeof(elem_t), count, input);
-  printf("Буфер (%ld элементов):\n", count);
+  printf("Буфер (%ld элементов):\n\n", count);
   for(int i = 0; i < count; i++) {
     printf("%.2f ", buffer[i]);
   }
-  printf("\n\n");
+  printf("\n\n----------------------\n");
   cpu * mycpu = cpu_construct();
   int i = 0;
   int k = 0;
@@ -47,10 +47,18 @@ int main(const int argc, const char* argv[]) {
     }
     else if ((int)buffer[i] == 7) {
       printf("MOVED TO MARK\n");
-      printf("i = %d\n", buffer[i+1]);
       i = buffer[i+1];
-      
     }
+    else if ((int)buffer[i] == 8) {
+      printf("CALL COMPLETED\n");
+      cpu_push(mycpu, (elem_t)(i+2));
+      i = (int)buffer[i+1];
+    }
+    else if ((int)buffer[i] == 9) { //ret
+      int ret_line = stack_pop(mycpu->stack);
+      i = ret_line;
+      printf("RETURNED TO %d\n", i);
+    }//stack_problem
     else {
       printf("EMERGENCY SHUTDOWN\n");
       printf("ax = %.2f\n", mycpu->registers[0]);
@@ -60,8 +68,11 @@ int main(const int argc, const char* argv[]) {
       printf("----------------------\n");
       break;
     }
-    k++;
-    if (k == 15) break; 
+    printf("stack: ");
+    for(int i = 0; i < mycpu->stack->size; i++) {
+      printf("%.2f ", mycpu->stack->arr[i]);
+    }
+    printf("\n");
     printf("ax = %.2f\n", mycpu->registers[0]);
     printf("bx = %.2f\n", mycpu->registers[1]);
     printf("cx = %.2f\n", mycpu->registers[2]);
@@ -106,6 +117,8 @@ void mov_reg_reg(cpu * cpu, int first_reg, int second_reg) { //4
   }
   cpu->registers[first_reg] = cpu->registers[second_reg];
 }
+
+
 
 //little endian
 //компиляция - перевод ассемблерного кода в исполняемый файл (.myexe)
